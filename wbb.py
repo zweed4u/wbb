@@ -23,7 +23,7 @@ class Warez:
 
         # Non-regex way
         # sid_from_js = [str(script_tagged_element.text.decode().strip()) for script_tagged_element in soup.find_all('script') if 'var SID' in script_tagged_element.text][0]        
-        login_path = soup.find_all('form')[0]['action']
+        login_path = soup.findAll('form')[0]['action']
         sid_from_form_action = login_path.split('?sid=')[-1]
         assert sid_from_js == sid_from_form_action, 'Received mismatched session id between login form action url and javascript variable'
         return sid_from_js
@@ -62,8 +62,15 @@ class Warez:
         }
         response = self.session.post('https://www.warez-bb.org/search.php', params={'mode':'results'}, data=payload, headers={'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
         response.raise_for_status()
-        print(response.content.decode())
-        # todo check rows here and return urls to posts
+        soup = BeautifulSoup(response.content.decode(), 'html.parser')
+        posts = soup.findAll('span', {'class':'topictitle'})
+        print(f'Search found {len(posts)} matches')
+        base_link = 'https://www.warez-bb.org'
+        for index, post in enumerate(posts):
+            soup = BeautifulSoup(str(post), 'html.parser')
+            link = soup.findAll('a')[0]
+            print(f"{index+1}.) {link.text}\n    {base_link}/{link['href']}\n")
+        # todo go through each link and parse each post for host urls
 
 root_directory = os.getcwd()
 cfg = configparser.ConfigParser()
