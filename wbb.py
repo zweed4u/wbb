@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 class Warez:
     def __init__(self):
         self.session = requests.session()
+        self.sid = None
 
     def _get_session_id(self):
         print(f'{datetime.datetime.now()} Fetching session id...')
@@ -28,6 +29,7 @@ class Warez:
         login_path = soup.findAll('form')[0]['action']
         sid_from_form_action = login_path.split('?sid=')[-1]
         assert sid_from_js == sid_from_form_action, 'Received mismatched session id between login form action url and javascript variable'
+        self.sid = sid_from_js
         return sid_from_js
 
     def login(self, username, password):
@@ -76,6 +78,13 @@ class Warez:
             print(f"{index+1}.) {link.text}\n    {base_link}/{link['href']}\n")
         # todo go through each link and parse each post for host urls
 
+    def logout(self, username):
+        print(f'{datetime.datetime.now()} Logging out...')
+        response = self.session.get('https://www.warez-bb.org/login.php', params={'logout': True, 'sid':self.sid}, headers={'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
+        response.raise_for_status()
+        regexp = re.compile(username)
+        assert regexp.search(response.content.decode()) is None, 'Username found on page! Log out did not succeed'
+
 root_directory = os.getcwd()
 cfg = configparser.ConfigParser()
 configFilePath = os.path.join(root_directory, 'config.cfg')
@@ -85,3 +94,4 @@ wbb = Warez()
 wbb.login(cfg.get('login', 'username'), cfg.get('login', 'password'))
 keywords = input('Enter search keywords: ')
 wbb.default_search(keywords)
+wbb.logout(cfg.get('login', 'username'))
