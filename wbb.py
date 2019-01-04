@@ -3,6 +3,7 @@
 import os
 import re
 import requests
+import datetime
 import configparser
 from bs4 import BeautifulSoup
 
@@ -12,6 +13,7 @@ class Warez:
         self.session = requests.session()
 
     def _get_session_id(self):
+        print(f'{datetime.datetime.now()} Fetching session id...')
         response = self.session.get('https://www.warez-bb.org/login.php', headers={'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -36,6 +38,7 @@ class Warez:
             'redirect': '',
             'login': 'Log in'
         }
+        print(f'{datetime.datetime.now()} Logging in...')
         response = self.session.post('https://www.warez-bb.org/login.php', params={'sid':self._get_session_id()}, data=payload, headers={'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
         response.raise_for_status()
         assert 'You have successfully logged in' in response.content.decode(), 'Unable to find successful log in notification after POSTing'
@@ -60,11 +63,12 @@ class Warez:
             'show_results': 'topics',
             'return_chars': 200
         }
+        print(f'{datetime.datetime.now()} Searching...')
         response = self.session.post('https://www.warez-bb.org/search.php', params={'mode':'results'}, data=payload, headers={'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'})
         response.raise_for_status()
         soup = BeautifulSoup(response.content.decode(), 'html.parser')
         posts = soup.findAll('span', {'class':'topictitle'})
-        print(f'Search found {len(posts)} matches')
+        print(f'{datetime.datetime.now()} Search found {len(posts)} matches')
         base_link = 'https://www.warez-bb.org'
         for index, post in enumerate(posts):
             soup = BeautifulSoup(str(post), 'html.parser')
